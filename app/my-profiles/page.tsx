@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, Eye, TrendingUp, Heart, ThumbsDown } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import DeleteProfileButton from '@/components/DeleteProfileButton';
 
@@ -18,7 +18,7 @@ export default async function MyProfilesPage() {
   } = await supabase.auth.getUser();
 
   const { data: profiles } = await supabase
-    .from('profiles')
+    .from('profiles_with_stats')
     .select('*')
     .eq('user_id', user!.id)
     .neq('status', 'deleted')
@@ -56,33 +56,54 @@ export default async function MyProfilesPage() {
             return (
               <div
                 key={profile.id}
-                className="flex items-center gap-4 rounded-xl2 border border-white/5 bg-bg-card p-3"
+                className="rounded-xl2 border border-white/5 bg-bg-card p-3"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img.publicUrl}
-                  alt={profile.username}
-                  className="h-16 w-16 flex-shrink-0 rounded-lg object-cover"
-                />
+                <div className="flex items-center gap-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.publicUrl}
+                    alt={profile.username}
+                    className="h-16 w-16 flex-shrink-0 rounded-lg object-cover"
+                  />
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/profile/${profile.username}`}
-                      className="truncate text-sm font-semibold hover:underline"
-                    >
-                      {profile.username}
-                    </Link>
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${status.className}`}>
-                      {status.text}
-                    </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/profile/${profile.username}`}
+                        className="truncate text-sm font-semibold hover:underline"
+                      >
+                        {profile.username}
+                      </Link>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${status.className}`}>
+                        {status.text}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-zinc-500">
+                      Created {new Date(profile.created_at).toLocaleDateString()}
+                    </p>
                   </div>
-                  <p className="mt-0.5 text-xs text-zinc-500">
-                    Created {new Date(profile.created_at).toLocaleDateString()}
-                  </p>
+
+                  <DeleteProfileButton profileId={profile.id} username={profile.username} />
                 </div>
 
-                <DeleteProfileButton profileId={profile.id} username={profile.username} />
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-white/5 pt-2.5 text-xs text-zinc-400">
+                  <span className="flex items-center gap-1.5" title="Impressions — how many times this card showed up in the feed">
+                    <TrendingUp className="h-3.5 w-3.5" />
+                    {profile.impression_count ?? 0}
+                  </span>
+                  <span className="flex items-center gap-1.5" title="Views — clicks into the profile">
+                    <Eye className="h-3.5 w-3.5" />
+                    {profile.view_count ?? 0}
+                  </span>
+                  <span className="flex items-center gap-1.5" title="Likes">
+                    <Heart className="h-3.5 w-3.5" />
+                    {profile.like_count ?? 0}
+                  </span>
+                  <span className="flex items-center gap-1.5" title="Dislikes">
+                    <ThumbsDown className="h-3.5 w-3.5" />
+                    {profile.dislike_count ?? 0}
+                  </span>
+                </div>
               </div>
             );
           })}

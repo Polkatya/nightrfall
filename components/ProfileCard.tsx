@@ -73,8 +73,9 @@ export default function ProfileCard({
       <div className="flex items-center justify-between px-3 py-2.5">
         <ReactionButton
           profileId={profile.id}
-          initialCount={profile.reaction_count ?? 0}
-          initialReacted={profile.reacted_by_me ?? false}
+          initialLikeCount={profile.like_count ?? profile.reaction_count ?? 0}
+          initialDislikeCount={profile.dislike_count ?? 0}
+          initialReaction={profile.my_reaction ?? null}
           isAuthed={isAuthed}
         />
         <span className="text-xs text-zinc-500">

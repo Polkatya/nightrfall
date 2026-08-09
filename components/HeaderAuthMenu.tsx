@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, LogOut, ShieldCheck } from 'lucide-react';
+import { User, LogOut, ShieldCheck, UserCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 
@@ -36,6 +36,12 @@ export default function HeaderAuthMenu({
       </button>
       {open && (
         <div className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-bg-elevated shadow-card">
+          <a
+            href="/my-profiles"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-zinc-200 hover:bg-white/5"
+          >
+            <UserCircle className="h-4 w-4" /> My Profiles
+          </a>
           {isAdmin && (
             <a
               href="/admin"

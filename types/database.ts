@@ -40,16 +40,23 @@ export interface Profile {
   created_at: string;
   updated_at: string;
   reaction_count?: number;
+  like_count?: number;
+  dislike_count?: number;
+  impression_count?: number;
+  view_count?: number;
   media_count?: number;
   is_featured?: boolean;
   reacted_by_me?: boolean;
+  my_reaction?: ReactionType | null;
 }
+
+export type ReactionType = 'like' | 'dislike';
 
 export interface Reaction {
   id: string;
   profile_id: string;
   user_id: string;
-  reaction_type: 'heart';
+  reaction_type: ReactionType;
   created_at: string;
 }
 

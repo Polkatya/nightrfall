@@ -33,15 +33,19 @@ export default async function ProfilePage({ params }: { params: { username: stri
     notFound();
   }
 
-  let reacted = false;
+  // count this as a "view" (a click into the profile)
+  const { error: viewError } = await supabase.rpc('increment_profile_view', { p_id: profile.id });
+  if (viewError) console.error('view tracking failed', viewError);
+
+  let myReaction: 'like' | 'dislike' | null = null;
   if (user) {
     const { data } = await supabase
       .from('reactions')
-      .select('id')
+      .select('reaction_type')
       .eq('profile_id', profile.id)
       .eq('user_id', user.id)
       .maybeSingle();
-    reacted = !!data;
+    myReaction = data?.reaction_type ?? null;
   }
 
   const { data: mediaRows } = await supabase
@@ -92,8 +96,9 @@ export default async function ProfilePage({ params }: { params: { username: stri
             <h1 className="text-xl font-semibold">{profile.username}</h1>
             <ReactionButton
               profileId={profile.id}
-              initialCount={profile.reaction_count ?? 0}
-              initialReacted={reacted}
+              initialLikeCount={profile.like_count ?? profile.reaction_count ?? 0}
+              initialDislikeCount={profile.dislike_count ?? 0}
+              initialReaction={myReaction}
               isAuthed={!!user}
             />
           </div>

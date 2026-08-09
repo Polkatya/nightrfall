@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import ProfileCard from '@/components/ProfileCard';
+import ImpressionTracker from '@/components/ImpressionTracker';
 import FilterBar from '@/components/FilterBar';
 import { FeedSkeleton, EmptyState } from '@/components/FeedStates';
 import AdBanner from '@/components/ads/AdBanner';
@@ -39,34 +40,37 @@ async function FeedGrid({ sort }: { sort: string }) {
     return <EmptyState message={error ? 'Could not load profiles.' : 'No profiles yet — be the first to create one.'} />;
   }
 
-  let reactedSet = new Set<string>();
+  let reactionMap = new Map<string, 'like' | 'dislike'>();
   if (user) {
     const { data: myReactions } = await supabase
       .from('reactions')
-      .select('profile_id')
+      .select('profile_id, reaction_type')
       .eq('user_id', user.id);
-    reactedSet = new Set((myReactions ?? []).map((r) => r.profile_id));
+    reactionMap = new Map((myReactions ?? []).map((r) => [r.profile_id, r.reaction_type]));
   }
 
   const enriched: Profile[] = profiles.map((p: any) => ({
     ...p,
-    reacted_by_me: reactedSet.has(p.id),
+    my_reaction: reactionMap.get(p.id) ?? null,
   }));
 
   return (
-    <div className="grid grid-cols-1 gap-4 py-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {enriched.map((profile) => {
-        const { data } = supabase.storage.from('profile-images').getPublicUrl(profile.image_path);
-        return (
-          <ProfileCard
-            key={profile.id}
-            profile={profile}
-            imageUrl={data.publicUrl}
-            isAuthed={!!user}
-          />
-        );
-      })}
-    </div>
+    <>
+      <ImpressionTracker profileIds={enriched.map((p) => p.id)} />
+      <div className="grid grid-cols-1 gap-4 py-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {enriched.map((profile) => {
+          const { data } = supabase.storage.from('profile-images').getPublicUrl(profile.image_path);
+          return (
+            <ProfileCard
+              key={profile.id}
+              profile={profile}
+              imageUrl={data.publicUrl}
+              isAuthed={!!user}
+            />
+          );
+        })}
+      </div>
+    </>
   );
 }
 
