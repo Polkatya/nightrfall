@@ -154,7 +154,11 @@ export default function CreateProfilePage() {
       toast.success('Profile submitted for review');
       setSubmittedUsername(username);
     } catch (err: any) {
-      toast.error(err.message ?? 'Could not create profile');
+      if (/PROFILE_LIMIT_REACHED/.test(err.message ?? '')) {
+        toast.error('You can have up to 3 profiles. Delete an old one from My Profiles first.');
+      } else {
+        toast.error(err.message ?? 'Could not create profile');
+      }
     } finally {
       setSubmitting(false);
     }

@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 // Anyone can browse the site freely. Only creating a profile or visiting the
 // admin panel requires being logged in — reacting/reporting are gated inline
 // in their own components instead (they just prompt "log in" on click).
-const PROTECTED_PREFIXES = ['/create', '/admin'];
+const PROTECTED_PREFIXES = ['/create', '/admin', '/my-profiles'];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } });
@@ -60,5 +60,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/create/:path*', '/admin/:path*'],
+  matcher: ['/create/:path*', '/admin/:path*', '/my-profiles/:path*'],
 };

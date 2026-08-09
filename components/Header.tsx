@@ -20,7 +20,7 @@ export default async function Header() {
           <Link href="/?sort=latest" className="transition hover:text-white">Latest</Link>
           <Link href="/rules" className="transition hover:text-white">Rules</Link>
           {user && (
-            <Link href={`/profile/me`} className="transition hover:text-white">My Profile</Link>
+            <Link href={`/my-profiles`} className="transition hover:text-white">My Profiles</Link>
           )}
         </nav>
 
