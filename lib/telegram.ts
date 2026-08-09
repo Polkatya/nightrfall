@@ -87,6 +87,20 @@ export async function editModerationMessage(
   }).catch(() => null);
 }
 
+/** Plain text message, used for bot commands (/profiles, /delete, /help). */
+export async function sendMessage(chatId: string, text: string) {
+  await fetch(`${TELEGRAM_API}/bot${botToken()}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      parse_mode: 'MarkdownV2',
+      disable_web_page_preview: true,
+    }),
+  }).catch(() => null);
+}
+
 export async function answerCallbackQuery(callbackQueryId: string, text: string) {
   await fetch(`${TELEGRAM_API}/bot${botToken()}/answerCallbackQuery`, {
     method: 'POST',
@@ -97,6 +111,6 @@ export async function answerCallbackQuery(callbackQueryId: string, text: string)
 
 // Telegram's MarkdownV2 requires these characters to be escaped anywhere
 // they appear in plain text (not intended as formatting).
-function escapeMd(text: string) {
+export function escapeMd(text: string) {
   return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
 }

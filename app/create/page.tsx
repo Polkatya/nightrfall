@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { UploadCloud, X, Film, Image as ImageIcon, Clock } from 'lucide-react';
 import clsx from 'clsx';
 import AdBanner from '@/components/ads/AdBanner';
+import { compressImage } from '@/lib/image-compress';
 
 const DURATIONS = [
   { value: '', label: 'Not featured' },
@@ -41,7 +42,7 @@ export default function CreateProfilePage() {
   const router = useRouter();
   const supabase = createClient();
 
-  function handleFiles(fileList: FileList | null) {
+  async function handleFiles(fileList: FileList | null) {
     if (!fileList) return;
     const incoming = Array.from(fileList);
 
@@ -53,11 +54,14 @@ export default function CreateProfilePage() {
     const accepted: PendingItem[] = [];
     for (const file of incoming) {
       if (ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        if (file.size > MAX_IMAGE_SIZE) {
-          toast.error(`${file.name}: images must be under 5MB`);
+        // Compress first, then check size — this lets large-but-compressible
+        // photos through instead of rejecting them outright.
+        const compressed = await compressImage(file);
+        if (compressed.size > MAX_IMAGE_SIZE) {
+          toast.error(`${file.name}: still over 5MB after compression`);
           continue;
         }
-        accepted.push({ file, previewUrl: URL.createObjectURL(file), type: 'image' });
+        accepted.push({ file: compressed, previewUrl: URL.createObjectURL(compressed), type: 'image' });
       } else if (ALLOWED_VIDEO_TYPES.includes(file.type)) {
         if (file.size > MAX_VIDEO_SIZE) {
           toast.error(`${file.name}: videos must be under 50MB`);
@@ -155,7 +159,7 @@ export default function CreateProfilePage() {
       setSubmittedUsername(username);
     } catch (err: any) {
       if (/PROFILE_LIMIT_REACHED/.test(err.message ?? '')) {
-        toast.error('You can have up to 3 profiles. Delete an old one from My Profiles first.');
+        toast.error('You already have a profile. Delete it from My Profiles first if you want to create a new one.');
       } else {
         toast.error(err.message ?? 'Could not create profile');
       }

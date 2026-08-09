@@ -31,9 +31,9 @@ export default async function MyProfilesPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">My Profiles</h1>
-          <p className="mt-1 text-sm text-zinc-400">{list.length} of 3 used</p>
+          <p className="mt-1 text-sm text-zinc-400">{list.length} of 1 used</p>
         </div>
-        {list.length < 3 && (
+        {list.length < 1 && (
           <Link
             href="/create"
             className="flex items-center gap-1.5 rounded-full bg-grad-primary px-4 py-2 text-sm font-medium text-white shadow-glow transition hover:opacity-90"
