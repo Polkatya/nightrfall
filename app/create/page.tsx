@@ -38,7 +38,7 @@ export default function CreateProfilePage() {
   const [items, setItems] = useState<PendingItem[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [submittedUsername, setSubmittedUsername] = useState<string | null>(null);
+  const [submittedId, setSubmittedId] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -161,7 +161,7 @@ export default function CreateProfilePage() {
       }).catch(() => null);
 
       toast.success('Profile submitted for review');
-      setSubmittedUsername(trimmedUsername);
+      setSubmittedId(profile.id);
     } catch (err: any) {
       if (/PROFILE_LIMIT_REACHED/.test(err.message ?? '')) {
         toast.error('You already have a profile. Delete it from My Profiles first if you want to create a new one.');
@@ -334,7 +334,7 @@ export default function CreateProfilePage() {
         </button>
       </form>
 
-      {submittedUsername && (
+      {submittedId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-sm rounded-xl2 bg-bg-card p-5 text-center shadow-card">
             <div className="mb-4 flex justify-center">
@@ -351,7 +351,7 @@ export default function CreateProfilePage() {
 
             <button
               onClick={() => {
-                router.push(`/profile/${encodeURIComponent(submittedUsername ?? '')}`);
+                router.push(`/profile/${submittedId ?? ''}`);
                 router.refresh();
               }}
               className="mt-5 w-full rounded-lg bg-grad-primary py-2.5 text-sm font-medium text-white transition hover:opacity-90"

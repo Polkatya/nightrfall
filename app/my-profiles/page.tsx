@@ -69,7 +69,7 @@ export default async function MyProfilesPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/profile/${encodeURIComponent(profile.username)}`}
+                        href={`/profile/${profile.id}`}
                         className="truncate text-sm font-semibold hover:underline"
                       >
                         {profile.username}

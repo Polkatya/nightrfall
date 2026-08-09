@@ -3,12 +3,12 @@
 import { Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function ShareButton({ username }: { username: string }) {
+export default function ShareButton({ id, username }: { id: string; username: string }) {
   async function handleShare(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
 
-    const url = `${window.location.origin}/profile/${encodeURIComponent(username)}`;
+    const url = `${window.location.origin}/profile/${id}`;
 
     if (navigator.share) {
       try {

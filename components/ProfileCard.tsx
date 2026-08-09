@@ -19,7 +19,7 @@ export default function ProfileCard({
 }) {
   return (
     <Link
-      href={`/profile/${encodeURIComponent(profile.username)}`}
+      href={`/profile/${profile.id}`}
       className="group relative flex flex-col overflow-hidden rounded-xl2 border border-white/5 bg-bg-card shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-glow"
     >
       <div

@@ -16,14 +16,14 @@ export type GalleryItem = {
 export default function ProfileGallery({
   items,
   alt,
-  prevUsername,
-  nextUsername,
+  prevId,
+  nextId,
   children,
 }: {
   items: GalleryItem[];
   alt: string;
-  prevUsername?: string | null;
-  nextUsername?: string | null;
+  prevId?: string | null;
+  nextId?: string | null;
   children?: React.ReactNode;
 }) {
   const [active, setActive] = useState(0);
@@ -38,12 +38,12 @@ export default function ProfileGallery({
   // Left/right arrow keys jump to the previous/next profile, not the photo.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'ArrowLeft' && prevUsername) router.push(`/profile/${encodeURIComponent(prevUsername)}`);
-      if (e.key === 'ArrowRight' && nextUsername) router.push(`/profile/${encodeURIComponent(nextUsername)}`);
+      if (e.key === 'ArrowLeft' && prevId) router.push(`/profile/${prevId}`);
+      if (e.key === 'ArrowRight' && nextId) router.push(`/profile/${nextId}`);
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [prevUsername, nextUsername, router]);
+  }, [prevId, nextId, router]);
 
   return (
     <div>
@@ -61,18 +61,18 @@ export default function ProfileGallery({
         {children}
 
         {/* these switch to a whole different profile, not the photo within this one */}
-        {prevUsername && (
+        {prevId && (
           <Link
-            href={`/profile/${encodeURIComponent(prevUsername)}`}
+            href={`/profile/${prevId}`}
             aria-label="Previous profile"
             className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70"
           >
             <ChevronLeft className="h-6 w-6" />
           </Link>
         )}
-        {nextUsername && (
+        {nextId && (
           <Link
-            href={`/profile/${encodeURIComponent(nextUsername)}`}
+            href={`/profile/${nextId}`}
             aria-label="Next profile"
             className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70"
           >
