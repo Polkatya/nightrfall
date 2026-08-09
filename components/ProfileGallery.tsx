@@ -38,8 +38,8 @@ export default function ProfileGallery({
   // Left/right arrow keys jump to the previous/next profile, not the photo.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'ArrowLeft' && prevUsername) router.push(`/profile/${prevUsername}`);
-      if (e.key === 'ArrowRight' && nextUsername) router.push(`/profile/${nextUsername}`);
+      if (e.key === 'ArrowLeft' && prevUsername) router.push(`/profile/${encodeURIComponent(prevUsername)}`);
+      if (e.key === 'ArrowRight' && nextUsername) router.push(`/profile/${encodeURIComponent(nextUsername)}`);
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -63,7 +63,7 @@ export default function ProfileGallery({
         {/* these switch to a whole different profile, not the photo within this one */}
         {prevUsername && (
           <Link
-            href={`/profile/${prevUsername}`}
+            href={`/profile/${encodeURIComponent(prevUsername)}`}
             aria-label="Previous profile"
             className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70"
           >
@@ -72,7 +72,7 @@ export default function ProfileGallery({
         )}
         {nextUsername && (
           <Link
-            href={`/profile/${nextUsername}`}
+            href={`/profile/${encodeURIComponent(nextUsername)}`}
             aria-label="Next profile"
             className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70"
           >

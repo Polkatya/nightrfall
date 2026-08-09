@@ -94,8 +94,12 @@ export default function CreateProfilePage() {
     if (items.length === 0) return toast.error('Please add at least one photo or video');
     if (!confirmed) return toast.error('You must confirm the 18+ / rights statement');
     const trimmedUsername = username.trim();
-    if (trimmedUsername.length < 3 || trimmedUsername.length > 32 || /[\/\r\n]/.test(trimmedUsername)) {
-      return toast.error('Username must be 3-32 characters and can\'t contain "/" or line breaks');
+    if (
+      trimmedUsername.length < 3 ||
+      trimmedUsername.length > 32 ||
+      /[\/\\?#%&\r\n]/.test(trimmedUsername)
+    ) {
+      return toast.error('Username must be 3-32 characters and can\'t contain / \\ ? # % & or line breaks');
     }
 
     setSubmitting(true);
@@ -347,7 +351,7 @@ export default function CreateProfilePage() {
 
             <button
               onClick={() => {
-                router.push(`/profile/${submittedUsername}`);
+                router.push(`/profile/${encodeURIComponent(submittedUsername ?? '')}`);
                 router.refresh();
               }}
               className="mt-5 w-full rounded-lg bg-grad-primary py-2.5 text-sm font-medium text-white transition hover:opacity-90"

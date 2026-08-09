@@ -8,7 +8,7 @@ export default function ShareButton({ username }: { username: string }) {
     e.preventDefault();
     e.stopPropagation();
 
-    const url = `${window.location.origin}/profile/${username}`;
+    const url = `${window.location.origin}/profile/${encodeURIComponent(username)}`;
 
     if (navigator.share) {
       try {

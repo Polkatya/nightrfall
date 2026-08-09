@@ -71,7 +71,8 @@ export async function sendModerationRequest(profile: {
 
   await sendMediaGroup(chatId, profile.media);
 
-  const link = siteUrl() ? `${siteUrl()}/profile/${profile.username}` : `/profile/${profile.username}`;
+  const encodedUsername = encodeURIComponent(profile.username);
+  const link = siteUrl() ? `${siteUrl()}/profile/${encodedUsername}` : `/profile/${encodedUsername}`;
   const mediaNote = profile.media.length > 1 ? `${profile.media.length} items ⬆️` : null;
   const caption = [
     `🆕 New profile: *${escapeMd(profile.username)}*`,
@@ -119,7 +120,8 @@ export async function sendProfileCard(
   chatId: string,
   profile: { id: string; username: string; status: string; coverImageUrl: string }
 ) {
-  const link = siteUrl() ? `${siteUrl()}/profile/${profile.username}` : `/profile/${profile.username}`;
+  const encodedUsername = encodeURIComponent(profile.username);
+  const link = siteUrl() ? `${siteUrl()}/profile/${encodedUsername}` : `/profile/${encodedUsername}`;
   const caption = [
     `*${escapeMd(profile.username)}* — ${escapeMd(profile.status)}`,
     `[View on site](${link})`,
