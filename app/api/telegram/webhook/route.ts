@@ -110,8 +110,17 @@ export async function POST(req: NextRequest) {
       ? `✅ *${escapeMd(profile.username)}* — approved, now live`
       : `❌ *${escapeMd(profile.username)}* — rejected`;
 
+  // The card being decided on can be either a plain text moderation message
+  // (sendModerationRequest) or a photo card with a caption (sendProfileCard,
+  // from /profiles) — Telegram needs a different edit method for each, or
+  // the edit silently fails and the card is left looking untouched.
   if (chatId && messageId) {
-    await editMessageText(chatId, messageId, decisionText);
+    const isPhotoCard = Boolean(callback.message?.caption !== undefined);
+    if (isPhotoCard) {
+      await editMessageCaption(chatId, messageId, decisionText);
+    } else {
+      await editMessageText(chatId, messageId, decisionText);
+    }
   }
   await answerCallbackQuery(callback.id, action === 'approve' ? 'Approved' : 'Rejected');
 

@@ -112,8 +112,12 @@ export async function sendModerationRequest(profile: {
 }
 
 /**
- * Sends one profile as a photo card with a "Delete" button, used by the
+ * Sends one profile as a photo card with action buttons, used by the
  * /profiles command so an admin can see the actual content before deciding.
+ * Pending profiles get Approve/Reject too (not just Delete) — the automatic
+ * moderation card sent at submission time is best-effort and can fail to
+ * send, so this is the fallback way to actually approve something stuck in
+ * pending.
  */
 export async function sendProfileCard(
   chatId: string,
@@ -125,6 +129,17 @@ export async function sendProfileCard(
     `[View on site](${link})`,
   ].join('\n');
 
+  const buttons =
+    profile.status === 'pending'
+      ? [
+          [
+            { text: '✅ Approve', callback_data: `approve:${profile.id}` },
+            { text: '❌ Reject', callback_data: `reject:${profile.id}` },
+          ],
+          [{ text: '🗑️ Delete', callback_data: `delete:${profile.id}` }],
+        ]
+      : [[{ text: '🗑️ Delete', callback_data: `delete:${profile.id}` }]];
+
   await fetch(`${TELEGRAM_API}/bot${botToken()}/sendPhoto`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -133,9 +148,7 @@ export async function sendProfileCard(
       photo: profile.coverImageUrl,
       caption,
       parse_mode: 'MarkdownV2',
-      reply_markup: {
-        inline_keyboard: [[{ text: '🗑️ Delete', callback_data: `delete:${profile.id}` }]],
-      },
+      reply_markup: { inline_keyboard: buttons },
     }),
   }).catch(() => null);
 }
