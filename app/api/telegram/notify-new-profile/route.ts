@@ -31,7 +31,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, skipped: true });
   }
 
-  const { data: imageData } = admin.storage.from('profile-images').getPublicUrl(profile.image_path);
+  // Send the whole gallery, not just the cover — profile_media holds every
+  // item the user uploaded (image_path/position 0 is already in there too).
+  const { data: mediaRows } = await admin
+    .from('profile_media')
+    .select('media_path, media_type')
+    .eq('profile_id', profile.id)
+    .order('position', { ascending: true });
+
+  const media =
+    mediaRows && mediaRows.length > 0
+      ? mediaRows.map((m: { media_path: string; media_type: string }) => ({
+          url: admin.storage.from('profile-images').getPublicUrl(m.media_path).data.publicUrl,
+          type: m.media_type as 'image' | 'video',
+        }))
+      : [
+          {
+            url: admin.storage.from('profile-images').getPublicUrl(profile.image_path).data.publicUrl,
+            type: 'image' as const,
+          },
+        ];
 
   try {
     const sent = await sendModerationRequest({
@@ -39,7 +58,7 @@ export async function POST(req: NextRequest) {
       username: profile.username,
       bio: profile.bio,
       tags: profile.tags ?? [],
-      coverImageUrl: imageData.publicUrl,
+      media,
     });
 
     if (sent) {

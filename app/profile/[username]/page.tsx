@@ -54,6 +54,34 @@ export default async function ProfilePage({ params }: { params: { username: stri
     .eq('profile_id', profile.id)
     .order('position', { ascending: true });
 
+  // neighbors in the same order as the default feed (newest first), so the
+  // arrows step through profiles the same way scrolling the feed would.
+  const [{ data: newerRows }, { data: olderRows }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('username, created_at')
+      .eq('status', 'active')
+      .or(
+        `created_at.gt.${profile.created_at},and(created_at.eq.${profile.created_at},id.gt.${profile.id})`
+      )
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .limit(1),
+    supabase
+      .from('profiles')
+      .select('username, created_at')
+      .eq('status', 'active')
+      .or(
+        `created_at.lt.${profile.created_at},and(created_at.eq.${profile.created_at},id.lt.${profile.id})`
+      )
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(1),
+  ]);
+
+  const prevUsername = newerRows?.[0]?.username ?? null; // one step up (newer) in the feed
+  const nextUsername = olderRows?.[0]?.username ?? null; // one step down (older) in the feed
+
   const galleryItems: GalleryItem[] =
     mediaRows && mediaRows.length > 0
       ? mediaRows.map((m) => ({
@@ -80,7 +108,12 @@ export default async function ProfilePage({ params }: { params: { username: stri
       </div>
 
       <div className="overflow-hidden rounded-xl2 border border-white/5 bg-bg-card shadow-card">
-        <ProfileGallery items={galleryItems} alt={profile.username}>
+        <ProfileGallery
+          items={galleryItems}
+          alt={profile.username}
+          prevUsername={prevUsername}
+          nextUsername={nextUsername}
+        >
           {profile.is_featured && profile.featured_until && (
             <div className="absolute left-3 top-3">
               <CountdownTimer featuredUntil={profile.featured_until} />

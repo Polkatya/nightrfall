@@ -17,23 +17,65 @@ function siteUrl() {
 type SendResult = { chatId: string; messageId: string } | null;
 
 /**
- * Sends the new-profile moderation card to the admin chat, with an inline
- * "Approve / Reject" keyboard. Returns the chat/message id so the webhook
- * can later edit this exact message once a decision is made.
+ * Sends the full gallery (photos/videos) as an album (or a single item if
+ * there's only one — Telegram's media-group API requires at least 2).
+ */
+export async function sendMediaGroup(
+  chatId: string,
+  media: { url: string; type: 'image' | 'video' }[]
+) {
+  if (media.length === 0) return;
+
+  if (media.length === 1) {
+    const item = media[0];
+    const method = item.type === 'video' ? 'sendVideo' : 'sendPhoto';
+    const field = item.type === 'video' ? 'video' : 'photo';
+    await fetch(`${TELEGRAM_API}/bot${botToken()}/${method}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, [field]: item.url }),
+    }).catch(() => null);
+    return;
+  }
+
+  const capped = media.slice(0, 10); // Telegram's media-group cap
+  await fetch(`${TELEGRAM_API}/bot${botToken()}/sendMediaGroup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      media: capped.map((item) => ({
+        type: item.type === 'video' ? 'video' : 'photo',
+        media: item.url,
+      })),
+    }),
+  }).catch(() => null);
+}
+
+/**
+ * Sends the new-profile moderation card to the admin chat: first the full
+ * gallery as an album, then a text message with the details and an inline
+ * "Approve / Reject" keyboard (media-group messages can't carry buttons,
+ * so the two are always separate). Returns the *text* message's chat/id so
+ * the webhook can later edit it once a decision is made.
  */
 export async function sendModerationRequest(profile: {
   id: string;
   username: string;
   bio: string | null;
   tags: string[];
-  coverImageUrl: string;
+  media: { url: string; type: 'image' | 'video' }[];
 }): Promise<SendResult> {
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!chatId) throw new Error('TELEGRAM_CHAT_ID is not set');
 
+  await sendMediaGroup(chatId, profile.media);
+
   const link = siteUrl() ? `${siteUrl()}/profile/${profile.username}` : `/profile/${profile.username}`;
+  const mediaNote = profile.media.length > 1 ? `${profile.media.length} items ⬆️` : null;
   const caption = [
     `🆕 New profile: *${escapeMd(profile.username)}*`,
+    mediaNote,
     profile.bio ? escapeMd(profile.bio) : null,
     profile.tags.length ? profile.tags.map((t) => `#${t}`).join(' ') : null,
     `[View on site](${link})`,
@@ -41,14 +83,14 @@ export async function sendModerationRequest(profile: {
     .filter(Boolean)
     .join('\n\n');
 
-  const res = await fetch(`${TELEGRAM_API}/bot${botToken()}/sendPhoto`, {
+  const res = await fetch(`${TELEGRAM_API}/bot${botToken()}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: chatId,
-      photo: profile.coverImageUrl,
-      caption,
+      text: caption,
       parse_mode: 'MarkdownV2',
+      disable_web_page_preview: true,
       reply_markup: {
         inline_keyboard: [
           [
@@ -62,7 +104,7 @@ export async function sendModerationRequest(profile: {
 
   const data = await res.json();
   if (!data.ok) {
-    console.error('Telegram sendPhoto failed', data);
+    console.error('Telegram sendMessage (moderation) failed', data);
     return null;
   }
 
@@ -98,11 +140,26 @@ export async function sendProfileCard(
   }).catch(() => null);
 }
 
-/** Edits the original moderation card once an admin has approved/rejected it. */
-export async function editModerationMessage(
+/** Edits the original moderation card (a plain text message) once an admin has approved/rejected it. */
+export async function editMessageText(chatId: string, messageId: string, text: string) {
+  await fetch(`${TELEGRAM_API}/bot${botToken()}/editMessageText`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      message_id: messageId,
+      text,
+      parse_mode: 'MarkdownV2',
+      disable_web_page_preview: true,
+    }),
+  }).catch(() => null);
+}
+
+/** Edits a photo message's caption — used by the /profiles → Delete flow (still a single photo card). */
+export async function editMessageCaption(
   chatId: string,
   messageId: string,
-  decisionText: string
+  caption: string
 ) {
   await fetch(`${TELEGRAM_API}/bot${botToken()}/editMessageCaption`, {
     method: 'POST',
@@ -110,7 +167,7 @@ export async function editModerationMessage(
     body: JSON.stringify({
       chat_id: chatId,
       message_id: messageId,
-      caption: decisionText,
+      caption,
       parse_mode: 'MarkdownV2',
     }),
   }).catch(() => null);

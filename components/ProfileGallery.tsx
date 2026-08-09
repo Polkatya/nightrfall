@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import clsx from 'clsx';
-import { Film } from 'lucide-react';
+import { Film, ChevronLeft, ChevronRight } from 'lucide-react';
 import { triggerPopunder } from '@/lib/popunder';
 
 export type GalleryItem = {
@@ -14,19 +16,34 @@ export type GalleryItem = {
 export default function ProfileGallery({
   items,
   alt,
+  prevUsername,
+  nextUsername,
   children,
 }: {
   items: GalleryItem[];
   alt: string;
+  prevUsername?: string | null;
+  nextUsername?: string | null;
   children?: React.ReactNode;
 }) {
   const [active, setActive] = useState(0);
   const current = items[active] ?? items[0];
+  const router = useRouter();
 
   // Fire once when someone opens a profile — not on every click inside it.
   useEffect(() => {
     triggerPopunder();
   }, []);
+
+  // Left/right arrow keys jump to the previous/next profile, not the photo.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'ArrowLeft' && prevUsername) router.push(`/profile/${prevUsername}`);
+      if (e.key === 'ArrowRight' && nextUsername) router.push(`/profile/${nextUsername}`);
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [prevUsername, nextUsername, router]);
 
   return (
     <div>
@@ -42,6 +59,26 @@ export default function ProfileGallery({
         )}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
         {children}
+
+        {/* these switch to a whole different profile, not the photo within this one */}
+        {prevUsername && (
+          <Link
+            href={`/profile/${prevUsername}`}
+            aria-label="Previous profile"
+            className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Link>
+        )}
+        {nextUsername && (
+          <Link
+            href={`/profile/${nextUsername}`}
+            aria-label="Next profile"
+            className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Link>
+        )}
       </div>
 
       {items.length > 1 && (

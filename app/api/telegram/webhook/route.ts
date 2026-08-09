@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import {
   answerCallbackQuery,
-  editModerationMessage,
+  editMessageText,
+  editMessageCaption,
   sendMessage,
   sendProfileCard,
   escapeMd,
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (chatId && messageId) {
-      await editModerationMessage(chatId, messageId, `🗑️ *${escapeMd(profile.username)}* — deleted`);
+      await editMessageCaption(chatId, messageId, `🗑️ *${escapeMd(profile.username)}* — deleted`);
     }
     await answerCallbackQuery(callback.id, 'Deleted');
     return NextResponse.json({ ok: true });
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
       : `❌ *${escapeMd(profile.username)}* — rejected`;
 
   if (chatId && messageId) {
-    await editModerationMessage(chatId, messageId, decisionText);
+    await editMessageText(chatId, messageId, decisionText);
   }
   await answerCallbackQuery(callback.id, action === 'approve' ? 'Approved' : 'Rejected');
 
