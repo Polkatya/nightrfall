@@ -69,6 +69,35 @@ export async function sendModerationRequest(profile: {
   return { chatId: String(data.result.chat.id), messageId: String(data.result.message_id) };
 }
 
+/**
+ * Sends one profile as a photo card with a "Delete" button, used by the
+ * /profiles command so an admin can see the actual content before deciding.
+ */
+export async function sendProfileCard(
+  chatId: string,
+  profile: { id: string; username: string; status: string; coverImageUrl: string }
+) {
+  const link = siteUrl() ? `${siteUrl()}/profile/${profile.username}` : `/profile/${profile.username}`;
+  const caption = [
+    `*${escapeMd(profile.username)}* — ${escapeMd(profile.status)}`,
+    `[View on site](${link})`,
+  ].join('\n');
+
+  await fetch(`${TELEGRAM_API}/bot${botToken()}/sendPhoto`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      photo: profile.coverImageUrl,
+      caption,
+      parse_mode: 'MarkdownV2',
+      reply_markup: {
+        inline_keyboard: [[{ text: '🗑️ Delete', callback_data: `delete:${profile.id}` }]],
+      },
+    }),
+  }).catch(() => null);
+}
+
 /** Edits the original moderation card once an admin has approved/rejected it. */
 export async function editModerationMessage(
   chatId: string,

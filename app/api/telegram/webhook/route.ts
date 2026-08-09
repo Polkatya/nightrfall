@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
-import { answerCallbackQuery, editModerationMessage, sendMessage, escapeMd } from '@/lib/telegram';
+import {
+  answerCallbackQuery,
+  editModerationMessage,
+  sendMessage,
+  sendProfileCard,
+  escapeMd,
+} from '@/lib/telegram';
 
 /**
  * Receives updates from Telegram: callback_query (Approve/Reject taps on a
@@ -32,7 +38,7 @@ export async function POST(req: NextRequest) {
   const chatId = String(callback.message?.chat?.id ?? '');
   const messageId = String(callback.message?.message_id ?? '');
 
-  if (!profileId || (action !== 'approve' && action !== 'reject')) {
+  if (!profileId || (action !== 'approve' && action !== 'reject' && action !== 'delete')) {
     await answerCallbackQuery(callback.id, 'Unknown action');
     return NextResponse.json({ ok: true });
   }
@@ -46,6 +52,34 @@ export async function POST(req: NextRequest) {
 
   if (!profile) {
     await answerCallbackQuery(callback.id, 'Profile no longer exists');
+    return NextResponse.json({ ok: true });
+  }
+
+  // Delete button from /profiles — separate flow, not gated on 'pending'
+  // like approve/reject are (a delete can happen from any status).
+  if (action === 'delete') {
+    if (profile.status === 'deleted') {
+      await answerCallbackQuery(callback.id, 'Already deleted');
+      return NextResponse.json({ ok: true });
+    }
+
+    await admin.from('profiles').update({ status: 'deleted' }).eq('id', profileId);
+
+    const { data: anyAdmin } = await admin.from('users').select('id').eq('role', 'admin').limit(1).maybeSingle();
+    if (anyAdmin) {
+      await admin.from('moderation_logs').insert({
+        admin_id: anyAdmin.id,
+        action: 'delete_profile',
+        target_type: 'profile',
+        target_id: profileId,
+        notes: 'Deleted via Telegram',
+      });
+    }
+
+    if (chatId && messageId) {
+      await editModerationMessage(chatId, messageId, `🗑️ *${escapeMd(profile.username)}* — deleted`);
+    }
+    await answerCallbackQuery(callback.id, 'Deleted');
     return NextResponse.json({ ok: true });
   }
 
@@ -84,12 +118,6 @@ export async function POST(req: NextRequest) {
 }
 
 
-const STATUS_EMOJI: Record<string, string> = {
-  pending: '🕒',
-  active: '✅',
-  hidden: '🙈',
-};
-
 /**
  * Text-command handler for the moderation bot. Only the configured admin
  * chat (TELEGRAM_CHAT_ID) is allowed to run these — anyone else is
@@ -114,22 +142,28 @@ async function handleCommand(message: any) {
   if (command === '/profiles' || command === '/list') {
     const { data: profiles } = await admin
       .from('profiles')
-      .select('username, status, created_at')
+      .select('id, username, status, image_path, created_at')
       .neq('status', 'deleted')
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(10);
 
     if (!profiles || profiles.length === 0) {
       await sendMessage(chatId, 'No profiles yet\\.');
       return NextResponse.json({ ok: true });
     }
 
-    const lines = profiles.map(
-      (p: { username: string; status: string }) =>
-        `${STATUS_EMOJI[p.status] ?? '•'} *${escapeMd(p.username)}* — ${escapeMd(p.status)}`
-    );
-    lines.push('', 'Delete one with `/delete username`');
-    await sendMessage(chatId, lines.join('\n'));
+    await sendMessage(chatId, `Last ${profiles.length} profiles:`);
+
+    for (const p of profiles as { id: string; username: string; status: string; image_path: string }[]) {
+      const { data: img } = admin.storage.from('profile-images').getPublicUrl(p.image_path);
+      await sendProfileCard(chatId, {
+        id: p.id,
+        username: p.username,
+        status: p.status,
+        coverImageUrl: img.publicUrl,
+      });
+    }
+
     return NextResponse.json({ ok: true });
   }
 
