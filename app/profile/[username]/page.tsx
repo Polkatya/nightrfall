@@ -4,6 +4,7 @@ import ReactionButton from '@/components/ReactionButton';
 import ReportModal from '@/components/ReportModal';
 import CountdownTimer from '@/components/CountdownTimer';
 import ProfileGallery, { type GalleryItem } from '@/components/ProfileGallery';
+import ShareButton from '@/components/ShareButton';
 import AdBanner from '@/components/ads/AdBanner';
 
 export const dynamic = 'force-dynamic';
@@ -119,7 +120,8 @@ export default async function ProfilePage({ params }: { params: { username: stri
               <CountdownTimer featuredUntil={profile.featured_until} />
             </div>
           )}
-          <div className="absolute right-3 top-3">
+          <div className="absolute right-3 top-3 flex items-center gap-2">
+            <ShareButton username={profile.username} />
             <ReportModal profileId={profile.id} isAuthed={!!user} />
           </div>
         </ProfileGallery>

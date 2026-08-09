@@ -40,9 +40,9 @@ export default function RegisterPage() {
       password,
       options: { data: { username } },
     });
-    setLoading(false);
 
     if (error) {
+      setLoading(false);
       // Supabase's default error mentions "email" since that's the underlying
       // field — reword it so it reads correctly for a username-only form.
       if (/email/i.test(error.message)) {
@@ -53,8 +53,24 @@ export default function RegisterPage() {
       return;
     }
 
-    toast.success('Account created — you can log in now');
-    router.push(next ? `/login?next=${encodeURIComponent(next)}` : '/login');
+    // signUp doesn't always hand back a live session (depends on Supabase's
+    // email-confirmation setting), so sign in explicitly right after to
+    // guarantee the person lands logged in — no separate login step.
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: usernameToAuthEmail(username),
+      password,
+    });
+    setLoading(false);
+
+    if (signInError) {
+      toast.success('Account created — log in to continue');
+      router.push(next ? `/login?next=${encodeURIComponent(next)}` : '/login');
+      return;
+    }
+
+    toast.success('Welcome!');
+    router.push(next ?? '/');
+    router.refresh();
   }
 
   return (

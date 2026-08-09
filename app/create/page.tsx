@@ -10,11 +10,11 @@ import AdBanner from '@/components/ads/AdBanner';
 import { compressImage } from '@/lib/image-compress';
 
 const DURATIONS = [
-  { value: '', label: 'Not featured' },
+  { value: '0.5', label: '30 minutes' },
   { value: '1', label: '1 hour' },
   { value: '6', label: '6 hours' },
-  { value: '24', label: '24 hours' },
-  { value: '72', label: '3 days' },
+  { value: '12', label: '12 hours' },
+  { value: '24', label: '24 hours (max)' },
 ];
 
 const MAX_ITEMS = 10;
@@ -34,7 +34,7 @@ export default function CreateProfilePage() {
   const [bio, setBio] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
-  const [duration, setDuration] = useState('');
+  const [duration, setDuration] = useState('0.5');
   const [items, setItems] = useState<PendingItem[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -93,8 +93,9 @@ export default function CreateProfilePage() {
 
     if (items.length === 0) return toast.error('Please add at least one photo or video');
     if (!confirmed) return toast.error('You must confirm the 18+ / rights statement');
-    if (!/^[a-zA-Z0-9_]{3,32}$/.test(username)) {
-      return toast.error('Username must be 3-32 characters (letters, numbers, underscore)');
+    const trimmedUsername = username.trim();
+    if (trimmedUsername.length < 3 || trimmedUsername.length > 32 || /[\/\r\n]/.test(trimmedUsername)) {
+      return toast.error('Username must be 3-32 characters and can\'t contain "/" or line breaks');
     }
 
     setSubmitting(true);
@@ -125,7 +126,7 @@ export default function CreateProfilePage() {
         .from('profiles')
         .insert({
           user_id: user.id,
-          username,
+          username: trimmedUsername,
           bio: bio || null,
           image_path: uploaded[0].path,
           tags,
@@ -156,7 +157,7 @@ export default function CreateProfilePage() {
       }).catch(() => null);
 
       toast.success('Profile submitted for review');
-      setSubmittedUsername(username);
+      setSubmittedUsername(trimmedUsername);
     } catch (err: any) {
       if (/PROFILE_LIMIT_REACHED/.test(err.message ?? '')) {
         toast.error('You already have a profile. Delete it from My Profiles first if you want to create a new one.');
