@@ -6,7 +6,7 @@ import clsx from 'clsx';
 const FILTERS = [
   { value: 'latest', label: 'Latest' },
   { value: 'popular', label: 'Popular' },
-  { value: 'ending_soon', label: 'Ending Soon' },
+  { value: 'ending_soon', label: 'Expiring Soon' },
 ];
 
 export default function FilterBar() {

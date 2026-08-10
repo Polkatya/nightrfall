@@ -10,11 +10,11 @@ import AdBanner from '@/components/ads/AdBanner';
 import { compressImage } from '@/lib/image-compress';
 
 const DURATIONS = [
-  { value: '0.5', label: '30 minutes' },
-  { value: '1', label: '1 hour' },
-  { value: '6', label: '6 hours' },
-  { value: '12', label: '12 hours' },
-  { value: '24', label: '24 hours (max)' },
+  { value: '1', label: '1 day' },
+  { value: '3', label: '3 days' },
+  { value: '7', label: '7 days' },
+  { value: '30', label: '30 days' },
+  { value: '', label: 'Never (no auto-delete)' },
 ];
 
 const MAX_ITEMS = 10;
@@ -34,7 +34,7 @@ export default function CreateProfilePage() {
   const [bio, setBio] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
-  const [duration, setDuration] = useState('0.5');
+  const [duration, setDuration] = useState('7');
   const [items, setItems] = useState<PendingItem[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -121,8 +121,11 @@ export default function CreateProfilePage() {
         uploaded.push({ path, type: item.type });
       }
 
+      // "duration" is now in days (the field controls when the profile gets
+      // auto-deleted, not just when it stops being featured — see
+      // 0007_expire_profiles.sql for the job that actually deletes it).
       const featured_until = duration
-        ? new Date(Date.now() + Number(duration) * 3600 * 1000).toISOString()
+        ? new Date(Date.now() + Number(duration) * 24 * 3600 * 1000).toISOString()
         : null;
 
       // image_path stores the cover (first item) for feed thumbnails.
@@ -301,7 +304,7 @@ export default function CreateProfilePage() {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs text-zinc-400">Featured duration</label>
+          <label className="mb-1 block text-xs text-zinc-400">Auto-delete after</label>
           <select
             value={duration}
             onChange={(e) => setDuration(e.target.value)}
