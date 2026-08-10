@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Plus, Sparkles } from 'lucide-react';
 import { getCurrentUser } from '@/lib/supabase/server';
 import HeaderAuthMenu from './HeaderAuthMenu';
+import NotificationBell from './NotificationBell';
 
 export default async function Header() {
   const user = await getCurrentUser();
@@ -33,6 +34,7 @@ export default async function Header() {
               >
                 <Plus className="h-4 w-4" /> Create
               </Link>
+              <NotificationBell userId={user.id} />
               <HeaderAuthMenu username={user.username} isAdmin={user.role === 'admin'} />
             </>
           ) : (

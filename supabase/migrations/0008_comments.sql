@@ -39,7 +39,9 @@ create policy "comments_delete_own_or_admin"
   on public.comments for delete
   using (auth.uid() = user_id or public.is_admin());
 
--- surface a comment count alongside the other feed stats.
+-- surface a comment count alongside the other feed stats. New columns in a
+-- "create or replace view" must go at the end — Postgres won't let you
+-- reorder or insert a column before existing ones, only append.
 create or replace view public.profiles_with_stats as
 select
   p.*,
@@ -47,8 +49,8 @@ select
   coalesce(d.dislike_count, 0) as dislike_count,
   coalesce(l.like_count, 0) as reaction_count, -- kept for backward compatibility
   coalesce(m.media_count, 0) as media_count,
-  coalesce(c.comment_count, 0) as comment_count,
-  (p.featured_until is not null and p.featured_until > now()) as is_featured
+  (p.featured_until is not null and p.featured_until > now()) as is_featured,
+  coalesce(c.comment_count, 0) as comment_count
 from public.profiles p
 left join (
   select profile_id, count(*) as like_count

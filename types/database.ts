@@ -60,6 +60,21 @@ export interface Comment {
   username?: string; // joined in from users when listing
 }
 
+export type NotificationType = 'like' | 'comment';
+
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  actor_id: string | null;
+  profile_id: string | null;
+  type: NotificationType;
+  comment_preview: string | null;
+  is_read: boolean;
+  created_at: string;
+  actor_username?: string; // joined in from users when listing
+  profile_username?: string; // joined in from profiles when listing
+}
+
 export type ReactionType = 'like' | 'dislike';
 
 export interface Reaction {
