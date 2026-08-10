@@ -45,9 +45,19 @@ export interface Profile {
   impression_count?: number;
   view_count?: number;
   media_count?: number;
+  comment_count?: number;
   is_featured?: boolean;
   reacted_by_me?: boolean;
   my_reaction?: ReactionType | null;
+}
+
+export interface Comment {
+  id: string;
+  profile_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  username?: string; // joined in from users when listing
 }
 
 export type ReactionType = 'like' | 'dislike';

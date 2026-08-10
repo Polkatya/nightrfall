@@ -5,6 +5,7 @@ import ReportModal from '@/components/ReportModal';
 import CountdownTimer from '@/components/CountdownTimer';
 import ProfileGallery, { type GalleryItem } from '@/components/ProfileGallery';
 import ShareButton from '@/components/ShareButton';
+import CommentSection from '@/components/CommentSection';
 import AdBanner from '@/components/ads/AdBanner';
 
 export const dynamic = 'force-dynamic';
@@ -80,6 +81,21 @@ export default async function ProfilePage({ params }: { params: { id: string } }
     .select('media_path, media_type')
     .eq('profile_id', profile.id)
     .order('position', { ascending: true });
+
+  const { data: commentRows } = await supabase
+    .from('comments')
+    .select('id, profile_id, user_id, content, created_at, users(username)')
+    .eq('profile_id', profile.id)
+    .order('created_at', { ascending: false });
+
+  const comments = (commentRows ?? []).map((c: any) => ({
+    id: c.id,
+    profile_id: c.profile_id,
+    user_id: c.user_id,
+    content: c.content,
+    created_at: c.created_at,
+    username: c.users?.username ?? 'user',
+  }));
 
   // neighbors in the same order as the default feed (newest first), so the
   // arrows step through profiles the same way scrolling the feed would.
@@ -182,6 +198,13 @@ export default async function ProfilePage({ params }: { params: { id: string } }
           <p className="mt-6 text-xs text-zinc-500">
             Joined {new Date(profile.created_at).toLocaleDateString()}
           </p>
+
+          <CommentSection
+            profileId={profile.id}
+            initialComments={comments}
+            isAuthed={!!user}
+            currentUserId={user?.id ?? null}
+          />
         </div>
       </div>
 
